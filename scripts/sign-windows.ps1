@@ -66,7 +66,8 @@ if ($timestampUrl) {
 
 $signArgs += $resolvedTarget
 
-Write-Host "Executing: $signtool $($signArgs -join ' ')"
+$displayArgs = $signArgs | ForEach-Object { if ($password -and $_ -eq $password) { '***' } else { $_ } }
+Write-Host "Executing: $signtool $($displayArgs -join ' ')"
 & $signtool @signArgs
 
 if ($LASTEXITCODE -ne 0) {
