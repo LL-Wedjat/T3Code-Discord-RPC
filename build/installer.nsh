@@ -45,6 +45,11 @@ FunctionEnd
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "T3CodeDiscordRpc" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --hidden'
   ${ElseIf} $StartupChecked == ${BST_UNCHECKED}
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "T3CodeDiscordRpc"
+  ${Else}
+    ReadRegStr $1 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "T3CodeDiscordRpc"
+    ${If} $1 != ""
+      WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "T3CodeDiscordRpc" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --hidden'
+    ${EndIf}
   ${EndIf}
 !macroend
 

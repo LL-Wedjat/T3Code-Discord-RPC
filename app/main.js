@@ -32,6 +32,7 @@ let isConnected = false;
 let config = null;
 let latestSnapshot = null;
 let latestActivity = null;
+let loginItemState = false;
 
 const logs = [];
 const MAX_LOGS = 200;
@@ -86,9 +87,9 @@ function updateTrayMenu() {
     {
       type: 'checkbox',
       label: 'Start with Windows',
-      checked: loginItemEnabled(),
+      checked: loginItemState,
       click: (item) => {
-        setLoginItemEnabled(item.checked);
+        loginItemState = setLoginItemEnabled(item.checked);
         updateTrayMenu();
       },
     },
@@ -106,7 +107,7 @@ function updateTrayMenu() {
 }
 
 function createTrayIcon() {
-  return nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=');
+  return nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGOISP30HwAFdwKvhpvLXgAAAABJRU5ErkJggg==');
 }
 
 function setupTray() {
@@ -227,6 +228,7 @@ async function stopBridge() {
 }
 
 function loginItemEnabled() {
+  if (process.platform === 'win32' && !app.isPackaged) { return false; }
   if (process.platform === 'win32') {
     try {
       const out = childProcess.execFileSync(
@@ -349,9 +351,10 @@ function setupIpc() {
     return null;
   });
 
-  ipcMain.handle('get-login-item', () => ({ openAtLogin: loginItemEnabled() }));
+  ipcMain.handle('get-login-item', () => { loginItemState = loginItemEnabled(); return { openAtLogin: loginItemState }; });
   ipcMain.handle('set-login-item', (_event, enabled) => {
     const result = setLoginItemEnabled(enabled);
+    loginItemState = result;
     addLog(`Login item set to: ${result}`);
     updateTrayMenu();
     return { openAtLogin: result };
@@ -406,6 +409,7 @@ if (gotTheLock) {
     }
 
     setupIpc();
+    loginItemState = loginItemEnabled();
     setupTray();
     createWindow();
     startPolling();
