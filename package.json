@@ -1,0 +1,40 @@
+{
+  "name": "t3code-discord-rpc",
+  "version": "0.1.0",
+  "description": "Standalone Discord Rich Presence bridge for T3 Code",
+  "main": "src/index.js",
+  "bin": {
+    "t3code-discord-rpc": "src/index.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "files": [
+    "src",
+    "config.example.json",
+    "README.md",
+    "EXPLANICATION.html",
+    "DEVELOPMENT_NOTES.md",
+    "start-hidden.vbs",
+    "install-autostart.cmd",
+    "install-autostart.ps1"
+  ],
+  "scripts": {
+    "start": "node src/index.js",
+    "init": "node src/index.js --init",
+    "once": "node src/index.js --once",
+    "test": "node --test",
+    "check": "node --check src/index.js && node --check src/config.js && node --check src/t3-state.js && node --check src/presence.js && npm test"
+  },
+  "keywords": [
+    "t3code",
+    "discord",
+    "rich-presence",
+    "rpc"
+  ],
+  "author": "Hosam Tamer",
+  "license": "MIT",
+  "dependencies": {
+    "@xhayper/discord-rpc": "^1.5.1"
+  }
+}

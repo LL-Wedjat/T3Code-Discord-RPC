@@ -1,0 +1,18 @@
+{
+  "clientId": "PASTE_YOUR_DISCORD_APPLICATION_ID_HERE",
+  "pipeId": 0,
+  "stateFile": "",
+  "pollIntervalMs": 5000,
+  "activityName": "T3 Code",
+  "showProject": true,
+  "showModel": true,
+  "largeImageKey": "",
+  "smallImageKey": "",
+  "largeImageText": "",
+  "smallImageText": "",
+  "buttons": [],
+  "workingMessage": "Working for",
+  "idleMessage": "Idle in",
+  "clearWhenNoThread": true,
+  "debug": false
+}

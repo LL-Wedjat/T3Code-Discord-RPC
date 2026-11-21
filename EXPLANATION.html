@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T3 Code + Discord RPC — What I Did</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2230;
+    --text: #e6edf3;
+    --muted: #9aa7b4;
+    --line: #30363d;
+    --accent: #6cb6ff;
+    --green: #7ee787;
+    --yellow: #e3b341;
+    --red: #ff7b72;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 48px 24px 96px; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 28px; margin-bottom: 36px; }
+  h1 { margin: 0 0 8px; font-size: 2.1rem; letter-spacing: -.02em; }
+  h2 { margin: 52px 0 16px; font-size: 1.35rem; color: var(--accent); }
+  h3 { margin: 28px 0 8px; font-size: 1.05rem; }
+  p { margin: 10px 0; }
+  a { color: var(--accent); }
+  code { font-family: var(--mono); font-size: .9em; background: var(--panel-2); padding: 2px 6px; border-radius: 5px; }
+  pre {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: .88rem;
+    line-height: 1.55;
+  }
+  pre code { background: none; padding: 0; }
+  .tag {
+    display: inline-block; padding: 2px 9px; border-radius: 99px;
+    font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--muted);
+  }
+  .tag.ok { color: var(--green); border-color: #2d6a43; }
+  .tag.warn { color: var(--yellow); border-color: #6b5620; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin: 18px 0; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+  .card b { display: block; margin-bottom: 6px; color: var(--text); }
+  .card span { color: var(--muted); font-size: .92rem; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: .93rem; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  td:first-child { font-family: var(--mono); color: var(--accent); white-space: nowrap; }
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; margin: 18px 0; }
+  .node {
+    flex: 1 1 150px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 13px 14px; font-family: var(--mono); font-size: .85rem;
+  }
+  .node b { display: block; color: var(--accent); margin-bottom: 4px; font-family: inherit; }
+  .node small { color: var(--muted); font-family: -apple-system, sans-serif; }
+  .arrow { align-self: center; color: var(--muted); font-size: 1.2rem; }
+  .note { border-left: 3px solid var(--yellow); background: #2b2415; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+  .note.good { border-color: var(--green); background: #122a1c; }
+  ol.steps { padding-left: 22px; }
+  ol.steps li { margin: 8px 0; }
+  ul.tight { padding-left: 22px; margin: 8px 0; }
+  ul.tight li { margin: 4px 0; }
+  .path { color: var(--muted); font-family: var(--mono); font-size: .85rem; word-break: break-all; }
+  footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="tag ok">complete · verified</div>
+  <h1>Discord Rich Presence for T3 Code</h1>
+  <p class="path">C:\Users\Wedjat\.t3\scratch\2026-11-20-i-want-to-slop-up-90c14e14</p>
+  <p>You asked for a <strong>standalone app</strong> — no fork, no patching of T3 Code. This page explains the investigation, the design, the code I wrote, and how I verified it.</p>
+</header>
+
+<h2>1. The question and the decision</h2>
+<p>Originally the question was "how hard would a Discord RPC integration be?" I inspected the installed T3 Code build and its upstream repository, then recommended either a sidecar or a fork. You chose the <strong>standalone app</strong>, so I built the sidecar as a real, self-contained program.</p>
+
+<div class="grid">
+  <div class="card"><b>Installed app is Electron</b><span><code>app.asar</code> bundles the desktop client; <code>server.asar</code> bundles a local HTTP/SSE server.</span></div>
+  <div class="card"><b>Rich API exists</b><span>Endpoints like <code>/api/session</code>, <code>/api/session/active</code>, <code>/api/event</code> already expose session data.</span></div>
+  <div class="card"><b>No plugin system</b><span>No extension hook in the desktop app, so a fork would be required for in-app integration.</span></div>
+  <div class="card"><b>Upstream won't take it</b><span>The README says large features are not being accepted; a fork would be a maintenance burden.</span></div>
+</div>
+
+<p><strong>Key design choice:</strong> instead of fighting the desktop app's auth token (stored in its keyring/state DB), the standalone app reads T3 Code's local SQLite state file directly, read-only. That removes the need for any credentials and keeps the sidecar completely decoupled.</p>
+
+<h2>2. How the data is found</h2>
+<p>I probed <code>statev2.sqlite</code> with Node's built-in <code>node:sqlite</code> (read-only). The active data lives in the <code>orchestration_v2_*</code> tables, not the older <code>projection_threads</code> table:</p>
+<table>
+  <tr><th>Table</th><th>Used for</th></tr>
+  <tr><td>orchestration_v2_projection_threads</td><td>Thread title, project, creation time, last-visited time, model, worktree path, lineage — all in <code>payload_json</code>.</td></tr>
+  <tr><td>orchestration_v2_projection_runs</td><td>Latest run status (e.g. <code>running</code>) and run start time (<code>requested_at</code>).</td></tr>
+  <tr><td>orchestration_v2_projection_subagents</td><td>Active subagent tracking (status not in completed/failed/interrupted/cancelled/rolled_back). Drives the <code>Orchestrating N agents</code> presence state.</td></tr>
+  <tr><td>orchestration_v2_projection_provider_sessions</td><td>Fallback busy check: <code>status</code> = <code>running</code> / <code>ready</code> etc.</td></tr>
+  <tr><td>orchestration_v2_projection_runtime_requests</td><td>Pending requests → a "needs input" state.</td></tr>
+  <tr><td>projection_projects</td><td>Human-readable project title; falls back to worktree directory name.</td></tr>
+</table>
+
+<p>Thread selection logic:</p>
+<ul class="tight">
+  <li>Skip deleted, archived, snoozed threads. Only genuine subagents are excluded (<code>relationshipToParent: "subagent"</code>, <code>createdBy: "agent"</code>, or delegated task IDs); user-forked threads are fully supported and retained.</li>
+  <li>Presence follows the focused thread: on Windows, the Electron window title (format <code>project / thread</code>) is probed directly. If unavailable or on non-Windows platforms, it falls back to recent <code>thread.visit-recorded</code> heartbeat events in <code>orchestration_events</code> (recorded every ~10s for the focused thread), followed by command-palette opens (<code>opens.openedAt</code>).</li>
+  <li>A running task does not pin presence; busy status is only used as a tie-breaker when focus times match.</li>
+  <li>Derive status: <code>working</code> (local run active) → <code>orchestrating</code> (subagents running while local run waits) → <code>needs-input</code> → <code>idle</code>.</li>
+  <li>Per-turn run timer: the timer follows the current T3 Code run/turn and resets when a new run begins, matching T3's own 'Working for X' display. When busy, it uses the current run's <code>requested_at</code>; while waiting on subagents, the timer stays anchored to the parent run that spawned those subagents and keeps counting through the wait until the parent starts a new run.</li>
+  <li>Redundant project suffixes (where project equals thread title or "No project") are suppressed from status text.</li>
+</ul>
+
+<h2>3. Architecture</h2>
+<div class="flow">
+  <div class="node"><b>statev2.sqlite & Window Title</b><small>T3 Code writes thread + heartbeat events; PowerShell probes Electron title</small></div>
+  <div class="arrow">→</div>
+  <div class="node"><b>t3-state.js</b><small>Read-only query + title probe → choose focused thread → status</small></div>
+  <div class="arrow">→</div>
+  <div class="node"><b>index.js</b><small>500ms poll loop, CLI, logging, shutdown</small></div>
+  <div class="arrow">→</div>
+  <div class="node"><b>presence.js</b><small>Build activity, byte-truncate, wall-clock duration, 5s duration throttle</small></div>
+  <div class="arrow">→</div>
+  <div class="node"><b>Discord IPC</b><small>SET_ACTIVITY via @xhayper/discord-rpc</small></div>
+</div>
+
+<h3>Files created</h3>
+<table>
+  <tr><th>File</th><th>Role</th></tr>
+  <tr><td>package.json / package-lock.json</td><td>Project manifest; single dependency <code>@xhayper/discord-rpc</code> (pure JS, no native build).</td></tr>
+  <tr><td>src/index.js</td><td>CLI entry point: <code>--init</code>, <code>--once</code>, <code>--config</code>, <code>--client-id</code>, <code>--state-file</code>, <code>--pipe-id</code>, <code>--verbose</code>. Owns the poll loop and graceful shutdown.</td></tr>
+  <tr><td>src/config.js</td><td>Defaults, config file loading, config template generation. Config lives in <code>%APPDATA%\t3code-discord-rpc\config.json</code> on Windows.</td></tr>
+  <tr><td>src/t3-state.js</td><td>SQLite reader and active-thread resolver. Never writes; opens a fresh read-only connection per poll.</td></tr>
+  <tr><td>src/presence.js</td><td>Discord RPC client wrapper: builds activity, deduplicates by JSON key, sends structural changes immediately (subject to a 5-per-20s safety cap) and duration text to ≥5s, handles disconnect/reconnect with 5→60s backoff.</td></tr>
+  <tr><td>config.example.json</td><td>Annotated-by-example config template.</td></tr>
+  <tr><td>README.md</td><td>Setup, config table, CLI flags, limitations.</td></tr>
+  <tr><td>start-hidden.vbs</td><td>Windows launcher with no console window.</td></tr>
+  <tr><td>install-autostart.cmd / .ps1</td><td>Installs a shortcut into the Windows Startup folder.</td></tr>
+  <tr><td>.gitignore</td><td>Ignores <code>node_modules/</code>, local config, logs.</td></tr>
+</table>
+
+<h2>4. What Discord sees</h2>
+<pre><code>// Example: Multi-thread running with subagents (2 active threads, 5 active subagents)
+{
+  "name": "T3 Code",
+  "details": "Fix RPC Error",
+  "state": "5 agents · 2 threads · 12m",
+  "timestamps": { "start": 1763675837 },
+  "assets": { "large_text": "Fix RPC Error · Analyze Relationship History" }
+}
+
+// Example: Multi-thread running without subagents (fallback)
+{
+  "name": "T3 Code",
+  "details": "Fix RPC Error",
+  "state": "Working for 48m across 2 threads",
+  "timestamps": { "start": 1763675837 },
+  "assets": { "large_text": "Fix RPC Error · Analyze Relationship History" }
+}
+
+// Example: Single thread running
+{
+  "name": "T3 Code",
+  "details": "Discord RPC Integration Difficulty",
+  "state": "Working for 11m 42s in No project",
+  "timestamps": { "start": 1763675837 },
+  "assets": { "large_text": "T3 Code · hy4-flash-free" }
+}</code></pre>
+<p>Discord only permits a single Rich Presence activity per client. When multiple threads are running simultaneously, the bridge summarizes all active work: <code>details</code> features the focused thread headline, <code>state</code> displays compact agent and thread counts with wall-clock active working time when subagents are active (e.g. <code>5 agents · 2 threads · 12m</code>), falling back to <code>Working for &lt;duration&gt; across N threads</code> when no subagents are active, and <code>assets.large_text</code> joins running thread titles with dot separators.</p>
+<p>To respect Discord RPC rate limits, 500ms polling is used, structural changes (thread switches or status changes) are sent immediately (subject to a 5-per-20s safety cap), while ticking duration-only updates are throttled to 5 seconds. Redundant project names (such as "No project" or matching the thread title) are omitted from the status line. Text fields and buttons are truncated safely according to UTF-8 byte limits (128 bytes and 32 bytes respectively).</p>
+<p>The <code>timestamps.start</code> field is a 10-digit Unix seconds value representing total T3 Code server uptime (from <code>server-runtime.json</code>), keeping total uptime distinct from active task durations.</p>
+
+<h2>5. Verification</h2>
+<div class="note good"><strong>Detection verified.</strong> <code>npm run once</code> resolved the current thread: title <em>Discord RPC Integration Difficulty</em>, project <em>No project</em>, model <em>hy4-flash-free</em>, status <em>working</em>, with total uptime in <code>appStartMs</code>.</div>
+<div class="note good"><strong>Presence path verified.</strong> I ran the app against a fake local Discord IPC pipe that spoke the RPC framing protocol. It completed the handshake, received <code>READY</code>, and sent <code>SET_ACTIVITY</code> with the payload above. Result: <code>PASS</code>.</div>
+<div class="note good"><strong>Failure path verified.</strong> With an invalid client ID and Discord running, the app logged a clean <em>"Discord RPC unavailable: Connection ended"</em> and retried with backoff (5s, 10s, … capped at 60s) without crashing.</div>
+<p>I also syntax-checked every JS file, parsed the PowerShell installer, and confirmed <code>--init</code>, <code>--help</code>, and missing-state-file handling.</p>
+
+<h2>6. How to use it</h2>
+<pre><code>npm install                 # already done in the scratch folder
+npm run init                # create the config template
+# edit %APPDATA%\t3code-discord-rpc\config.json → set clientId
+npm run once                # confirm T3 Code state detection
+npm start                   # run the bridge (Discord desktop must be open)</code></pre>
+<p>Create the Discord app at <a href="https://discord.com/developers/applications">discord.com/developers/applications</a> and copy its <strong>Application ID</strong>. Optionally upload artwork under Rich Presence → Artwork Assets and set <code>largeImageKey</code> / <code>smallImageKey</code>.</p>
+
+<h3>Config options</h3>
+<table>
+  <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+  <tr><td>clientId</td><td>""</td><td>Your Discord application ID (required).</td></tr>
+  <tr><td>pipeId</td><td>0</td><td>Force a Discord IPC pipe; 0 = auto.</td></tr>
+  <tr><td>stateFile</td><td>auto</td><td>Override path to statev2.sqlite.</td></tr>
+  <tr><td>pollIntervalMs</td><td>500</td><td>State polling interval (default 500ms); structural changes sent immediately (subject to a 5-per-20s safety cap), duration text ~5s.</td></tr>
+  <tr><td>activityName</td><td>T3 Code</td><td>App name shown in Discord.</td></tr>
+  <tr><td>showProject / showModel</td><td>true</td><td>Include project / model text.</td></tr>
+  <tr><td>largeImageKey / smallImageKey</td><td>""</td><td>Discord artwork asset keys.</td></tr>
+  <tr><td>largeImageText / smallImageText</td><td>""</td><td>Artwork tooltips.</td></tr>
+  <tr><td>buttons</td><td>[]</td><td>Up to two <code>{label, url}</code> buttons.</td></tr>
+  <tr><td>workingMessage / idleMessage</td><td>Working for / Idle in</td><td>State-line verbs.</td></tr>
+  <tr><td>clearWhenNoThread</td><td>true</td><td>Clear presence when no thread is active.</td></tr>
+  <tr><td>debug</td><td>false</td><td>Verbose logging.</td></tr>
+</table>
+
+<h2>7. Limitations and gotchas</h2>
+<ul class="tight">
+  <li>Discord desktop must be running; the bridge reconnects automatically when it appears.</li>
+  <li>It reads T3 Code's internal SQLite schema. A T3 Code update could change that schema — rerun <code>npm run once</code> to diagnose.</li>
+  <li>Discord elapsed timer reflects total T3 Code uptime (from <code>server-runtime.json</code> <code>startedAt</code>). The active task's duration is displayed directly in the status line (e.g. <code>Working for 11m 42s in &lt;project&gt;</code>) when working, while idle shows no working duration.</li>
+  <li>No credentials are used or stored; the database is opened strictly read-only.</li>
+  <li>You must supply your own Discord application ID and assets — the project intentionally ships none.</li>
+  <li>Only the desktop/server machine can show this presence; web/mobile clients can't drive Discord RPC.</li>
+  <li>The IPC pipe override was added mainly for testing, but is also handy if multiple Discord clients are running.</li>
+</ul>
+
+<footer>
+  Built in the scratch workspace on 2026-11-21. Single dependency: <code>@xhayper/discord-rpc</code> v1.5.1. Verified against the live local T3 Code state and a simulated Discord RPC endpoint.
+</footer>
+
+</div>
+</body>
+</html>
