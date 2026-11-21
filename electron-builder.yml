@@ -3,9 +3,12 @@ productName: T3 Code Discord RPC
 directories:
   output: dist-electron
   buildResources: build
+extraMetadata:
+  main: app/main.js
 files:
   - "app/**/*"
   - "src/**/*"
+  - "build/**/*"
   - "package.json"
   - "node_modules/**/*"
 win:

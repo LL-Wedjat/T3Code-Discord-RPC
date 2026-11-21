@@ -1,19 +1,16 @@
 #!/usr/bin/env node
 'use strict';
 
-const childProcess = require('node:child_process');
 const path = require('node:path');
 const { defaultConfigPath, loadConfig, writeTemplate } = require('./config');
 const { readState } = require('./t3-state');
 const { PresenceBridge } = require('./presence');
-const { startSettingsServer } = require('./settings-ui');
 
 function parseArgs(argv) {
   const args = {
     configPath: defaultConfigPath(),
     init: false,
     once: false,
-    settings: false,
     verbose: false,
     clientId: null,
     stateFile: null,
@@ -23,7 +20,6 @@ function parseArgs(argv) {
     const arg = argv[i];
     if (arg === '--init') args.init = true;
     else if (arg === '--once') args.once = true;
-    else if (arg === '--settings') args.settings = true;
     else if (arg === '--verbose' || arg === '-v') args.verbose = true;
     else if (arg === '--config' && argv[i + 1]) args.configPath = path.resolve(argv[++i]);
     else if (arg === '--client-id' && argv[i + 1]) args.clientId = argv[++i];
@@ -48,7 +44,6 @@ Usage:
 Options:
   --init            Write a config template and exit.
   --once            Print the detected T3 Code state and exit (no Discord needed).
-  --settings          open the local settings page in your browser
   --config <path>   Use a specific config file.
   --client-id <id>  Override the Discord application ID.
   --state-file <p>  Override the T3 Code state SQLite file.
@@ -80,20 +75,6 @@ async function main() {
   if (args.pipeId !== null) config.pipeId = args.pipeId;
   if (args.verbose) config.debug = true;
   const log = makeLogger(config.debug);
-
-  if (args.settings) {
-    const port = Number(process.env.T3CODE_RPC_SETTINGS_PORT) || 8765;
-    startSettingsServer({ configPath: args.configPath, port });
-    const url = `http://127.0.0.1:${port}`;
-    console.log(`Settings: ${url}`);
-    try {
-      const opener = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
-      childProcess.exec(`${opener} ${url}`, () => {});
-    } catch {
-      // ignore failures
-    }
-    return;
-  }
 
   if (args.once) {
     console.log(JSON.stringify(readState(config.stateFile), null, 2));

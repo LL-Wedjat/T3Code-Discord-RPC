@@ -1,4 +1,0 @@
-@echo off
-setlocal
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0install-autostart.ps1" -Root "%~dp0"
-endlocal

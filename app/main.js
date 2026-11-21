@@ -9,6 +9,17 @@ const { readState } = require('../src/t3-state');
 const { PresenceBridge, buildActivity } = require('../src/presence');
 const { loadConfig, defaultConfigPath, validateConfig } = require('../src/config');
 
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
+
 let mainWindow = null;
 let tray = null;
 let bridge = null;
@@ -92,11 +103,7 @@ function updateTrayMenu() {
 }
 
 function createTrayIcon() {
-  // 16x16 transparent PNG icon fallback if no icon file exists
-  const iconBase64 =
-    'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAzSURBVDhPY/wPBAwUACZcDCmAiTGgoRjA+P//fyYqGvD//38GvAZgmhpGyBhYQDAwAABnKRLzB5U3ZgAAAABJRU5ErkJggg==';
-  const img = nativeImage.createFromBuffer(Buffer.from(iconBase64, 'base64'));
-  return img;
+  return nativeImage.createFromPath(process.execPath);
 }
 
 function setupTray() {
@@ -130,7 +137,7 @@ function pollCycle() {
       bridge.update(snapshot);
     }
 
-    if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
       mainWindow.webContents.send('state', {
         snapshot: latestSnapshot,
         activity: latestActivity,
@@ -145,7 +152,7 @@ function pollCycle() {
 function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
   pollCycle();
-  pollTimer = setInterval(pollCycle, 500);
+  pollTimer = setInterval(pollCycle, config?.pollIntervalMs || 500);
 }
 
 async function startBridge() {
@@ -164,6 +171,8 @@ async function startBridge() {
     if (msg.includes('Connected to Discord RPC') || msg.includes('Discord RPC login OK')) {
       updateConnection(true);
     } else if (msg.includes('Discord RPC disconnected') || msg.includes('Discord RPC unavailable')) {
+      updateConnection(false);
+    } else if (msg.includes('Failed to set presence')) {
       updateConnection(false);
     }
   };
@@ -278,6 +287,7 @@ function setupIpc() {
       fs.mkdirSync(path.dirname(confPath), { recursive: true });
       fs.writeFileSync(confPath, JSON.stringify(cfg, null, 2), 'utf8');
       config = loadConfig(confPath);
+      startPolling();
       addLog(`Saved configuration to ${confPath}`);
 
       if (isRunning && bridge) {
@@ -327,14 +337,6 @@ function setupIpc() {
     return null;
   });
 
-  ipcMain.handle('capture', async (_event, filePath) => {
-    if (!mainWindow) return false;
-    const img = await mainWindow.webContents.capturePage();
-    fs.mkdirSync(path.dirname(path.resolve(filePath)), { recursive: true });
-    fs.writeFileSync(filePath, img.toPNG());
-    return true;
-  });
-
   ipcMain.handle('get-login-item', () => ({ openAtLogin: loginItemEnabled() }));
   ipcMain.handle('set-login-item', (_event, enabled) => {
     const result = setLoginItemEnabled(enabled);
@@ -379,39 +381,6 @@ function createWindow() {
   mainWindow.on('hide', () => {
     updateTrayMenu();
   });
-
-  const screenshotArgIdx = process.argv.indexOf('--screenshot');
-  if (screenshotArgIdx !== -1) {
-    const nextArg = process.argv[screenshotArgIdx + 1];
-    const targetPath = nextArg && !nextArg.startsWith('--') ? nextArg : 'app-screenshot.png';
-
-    mainWindow.webContents.once('did-finish-load', () => {
-      setTimeout(async () => {
-        try {
-          const tabArg = process.argv.find((a) => a.startsWith('--tab='));
-          if (tabArg) {
-            const tab = tabArg.slice(6);
-            await mainWindow.webContents.executeJavaScript('document.querySelector(\'.nav-btn[data-tab=\"' + tab + '\"]\')?.click()');
-            await new Promise((r) => setTimeout(r, 300));
-          }
-          if (process.argv.includes('--scroll-bottom')) {
-            await mainWindow.webContents.executeJavaScript("const m = document.querySelector('.app-main'); if (m) m.scrollTop = m.scrollHeight;");
-            await new Promise((r) => setTimeout(r, 300));
-          }
-          const img = await mainWindow.webContents.capturePage();
-          const resolvedPath = path.resolve(targetPath);
-          fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
-          fs.writeFileSync(resolvedPath, img.toPNG());
-          addLog(`Screenshot saved to ${resolvedPath}`);
-        } catch (err) {
-          console.error('Screenshot capture failed:', err);
-        } finally {
-          app.isQuitting = true;
-          app.quit();
-        }
-      }, 1200);
-    });
-  }
 }
 
 app.whenReady().then(() => {
@@ -427,6 +396,7 @@ app.whenReady().then(() => {
   setupTray();
   createWindow();
   startPolling();
+  void startBridge();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

@@ -15,12 +15,7 @@
     "README.md",
     "EXPLANATION.html",
     "DEVELOPMENT_NOTES.md",
-    "start-hidden.vbs",
-    "install-autostart.cmd",
-    "install-autostart.ps1",
     "LICENSE",
-    "tray.ps1",
-    "scripts",
     "app",
     "build",
     "electron-builder.yml"
@@ -29,9 +24,8 @@
     "start": "node src/index.js",
     "init": "node src/index.js --init",
     "once": "node src/index.js --once",
-    "settings": "node src/index.js --settings",
     "test": "node --test",
-    "check": "node --check src/index.js && node --check src/config.js && node --check src/t3-state.js && node --check src/presence.js && node --check src/settings-ui.js && npm test",
+    "check": "node --check src/index.js && node --check src/config.js && node --check src/t3-state.js && node --check src/presence.js && npm test && node --check app/main.js && node --check app/preload.js && node --check app/renderer.js",
     "electron": "electron app/main.js",
     "dist": "electron-builder --win",
     "pack": "electron-builder --dir"

@@ -381,7 +381,14 @@ document.addEventListener('DOMContentLoaded', () => {
         cfg.buttons = [];
       }
 
-      await api.saveConfig(cfg);
+      const saveResult = await api.saveConfig(cfg);
+      if (saveResult && saveResult.ok === false) {
+        if (saveStatus) {
+          saveStatus.textContent = saveResult.error || 'Save failed';
+          saveStatus.style.color = 'var(--warn)';
+        }
+        return;
+      }
       renderConfigSummary(cfg);
       if (saveStatus) {
         saveStatus.textContent = 'Settings saved successfully!';
@@ -409,12 +416,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const loginAtStartup = document.getElementById('loginAtStartup');
+  let confirmedLoginState = loginAtStartup ? loginAtStartup.checked : false;
   if (loginAtStartup && api && typeof api.setLoginItem === 'function') {
     loginAtStartup.addEventListener('change', () => {
-      const previous = loginAtStartup.checked;
-      api.setLoginItem(previous).then(async () => {
+      const previous = confirmedLoginState;
+      api.setLoginItem(loginAtStartup.checked).then(async () => {
         const fresh = await api.getLoginItem();
         loginAtStartup.checked = Boolean(fresh && fresh.openAtLogin);
+        confirmedLoginState = loginAtStartup.checked;
         if (saveStatus) {
           saveStatus.textContent = loginAtStartup.checked ? 'Start with Windows: enabled' : 'Start with Windows: disabled';
           saveStatus.style.color = 'var(--ok)';
@@ -448,7 +457,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (config) {
         populateSettingsForm(config);
         const loginBox = document.getElementById('loginAtStartup');
-        if (loginBox && loginItem) loginBox.checked = Boolean(loginItem.openAtLogin);
+        if (loginBox && loginItem) {
+          loginBox.checked = Boolean(loginItem.openAtLogin);
+          confirmedLoginState = loginBox.checked;
+        }
         renderConfigSummary(config);
       }
       if (status) {

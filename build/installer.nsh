@@ -15,7 +15,7 @@ Function StartupPageCreate
 
   ${NSD_CreateCheckbox} 0 0 100% 12u "Start T3 Code Discord RPC with Windows"
   Pop $StartupCheckbox
-  ${NSD_SetState} $StartupCheckbox ${BST_CHECKED}
+  ${NSD_SetState} $StartupCheckbox ${BST_UNCHECKED}
 
   nsDialogs::Show
 FunctionEnd
@@ -24,12 +24,16 @@ Function StartupPageLeave
   ${NSD_GetState} $StartupCheckbox $StartupChecked
 FunctionEnd
 
+!macro customPageAfterChangeDir
   Page custom StartupPageCreate StartupPageLeave
+!macroend
 !endif
 
 !macro customInstall
   ${If} $StartupChecked == ${BST_CHECKED}
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "T3CodeDiscordRpc" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --hidden'
+  ${Else}
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "T3CodeDiscordRpc"
   ${EndIf}
 !macroend
 
