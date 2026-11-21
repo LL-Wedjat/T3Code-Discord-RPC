@@ -2,7 +2,7 @@
   "name": "t3code-discord-rpc",
   "version": "0.1.0",
   "description": "Standalone Discord Rich Presence bridge for T3 Code",
-  "main": "app/main.js",
+  "main": "src/index.js",
   "bin": {
     "t3code-discord-rpc": "src/index.js"
   },

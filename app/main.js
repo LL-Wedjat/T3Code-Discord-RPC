@@ -9,11 +9,14 @@ const { readState } = require('../src/t3-state');
 const { PresenceBridge, buildActivity } = require('../src/presence');
 const { loadConfig, defaultConfigPath, validateConfig } = require('../src/config');
 
-if (!app.requestSingleInstanceLock()) {
-  app.quit();
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.exit(0);
 } else {
-  app.on('second-instance', () => {
+  app.on('second-instance', (_event, argv) => {
+    if (argv.includes('--hidden')) return;
     if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.show();
       mainWindow.focus();
     }
@@ -103,7 +106,7 @@ function updateTrayMenu() {
 }
 
 function createTrayIcon() {
-  return nativeImage.createFromPath(process.execPath);
+  return nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lXcAAAAASUVORK5CYII=');
 }
 
 function setupTray() {
@@ -261,7 +264,9 @@ function setLoginItemEnabled(enabled) {
     }
   }
 
-  app.setLoginItemSettings({ openAtLogin: Boolean(enabled), args: ['--hidden'] });
+  if (process.platform !== 'win32') {
+    app.setLoginItemSettings({ openAtLogin: Boolean(enabled), args: ['--hidden'] });
+  }
   return loginItemEnabled();
 }
 
@@ -280,8 +285,10 @@ function setupIpc() {
     return config;
   });
 
-  ipcMain.handle('save-config', (_event, cfg) => {
+  ipcMain.handle('save-config', async (_event, cfg) => {
     try {
+      const previousClientId = config?.clientId;
+      const previousPipeId = config?.pipeId;
       validateConfig(cfg);
       const confPath = defaultConfigPath();
       fs.mkdirSync(path.dirname(confPath), { recursive: true });
@@ -291,7 +298,12 @@ function setupIpc() {
       addLog(`Saved configuration to ${confPath}`);
 
       if (isRunning && bridge) {
-        bridge.config = config;
+        if (config.clientId !== previousClientId || config.pipeId !== previousPipeId) {
+          await stopBridge();
+          await startBridge();
+        } else {
+          bridge.config = config;
+        }
       }
 
       return { ok: true };
@@ -383,30 +395,32 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
-  try {
-    const confPath = defaultConfigPath();
-    config = loadConfig(confPath);
-  } catch (err) {
-    addLog(`Config load warning: ${err.message}`);
-    config = loadConfig('');
-  }
-
-  setupIpc();
-  setupTray();
-  createWindow();
-  startPolling();
-  void startBridge();
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    } else if (mainWindow) {
-      mainWindow.show();
-      mainWindow.focus();
+if (gotTheLock) {
+  app.whenReady().then(() => {
+    try {
+      const confPath = defaultConfigPath();
+      config = loadConfig(confPath);
+    } catch (err) {
+      addLog(`Config load warning: ${err.message}`);
+      config = loadConfig('');
     }
+
+    setupIpc();
+    setupTray();
+    createWindow();
+    startPolling();
+    void startBridge();
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      } else if (mainWindow) {
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    });
   });
-});
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'win32') {
