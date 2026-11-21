@@ -1,3 +1,11 @@
 node_modules/
 config.json
 *.log
+dist-electron/
+app-screenshot.png
+packaged-screenshot.png
+settings-screenshot.png
+build/*
+!build/icon.ico
+!build/installer.nsh
+

@@ -4,14 +4,41 @@ A standalone Discord Rich Presence bridge for [T3 Code](https://t3.codes/). It r
 process — no fork, no patching, no T3 Code auth token. It reads T3 Code's local SQLite state
 (`~/.t3/userdata/statev2.sqlite`) and pushes the current thread as your Discord activity.
 
-## Installation
+## Desktop app (Windows .exe)
 
-### Prerequisites
+The project includes an Electron-based desktop application providing a full graphical interface and system tray integration.
+
+### Quick run and build
+- **Install dependencies:**
+  ```powershell
+  npm install
+  ```
+- **Run in development:**
+  ```powershell
+  npm run electron
+  ```
+- **Build Windows installer:**
+  ```powershell
+  npm run dist
+  ```
+  Build output is generated as `dist-electron/T3 Code Discord RPC Setup 0.1.0.exe` (x64 architecture, NSIS installer with desktop shortcut and custom icon). During installation, the NSIS installer asks whether to start T3 Code Discord RPC with Windows; this can also be toggled later in Settings or the tray menu, and the choice persists via the Windows Run entry.
+
+### Desktop GUI features
+- **Overview tab:** Live presence status, detected threads list, and controls to start, stop, or re-poll the bridge.
+- **Settings tab:** Full configuration editor for all options, including a file picker to locate your T3 Code state SQLite database, and a "Start with Windows" checkbox (and the same checkbox in the tray menu) that registers the app to run at login via the Windows Run registry key; when launched at startup the app starts hidden in the tray.
+- **Logs tab:** Real-time log viewer for bridge operations and diagnostic messages.
+- **System Tray:** Minimizes to the Windows system tray with context menu controls for **Show/Hide**, **Start/Stop**, **Start with Windows**, and **Quit**.
+
+## CLI / headless usage
+
+### Installation
+
+#### Prerequisites
 - Node.js >= 22.5.0 (`node:sqlite` built-in support required)
 - Discord desktop app running locally
 - T3 Code running locally
 
-### Global install or running via npx
+#### Global install or running via npx
 ```bash
 npm install -g t3code-discord-rpc
 t3code-discord-rpc --init
@@ -119,12 +146,6 @@ Discord uses local named pipes (`\\?\pipe\discord-ipc-0` through `9` on Windows,
 -h, --help             show help
 ```
 
-## Run hidden / at startup (Windows)
-
-`start-hidden.vbs` launches the bridge without a console window. To auto-start it, put a shortcut
-to that script in `shell:startup` (`Win+R` → `shell:startup`). Or run `install-autostart.cmd`
-to create the shortcut automatically.
-
 ## Testing
 
 Run unit tests via Node's native test runner:
@@ -152,9 +173,7 @@ The test suite covers:
 - **Discord desktop required:** Discord desktop must be running; the RPC client reconnects with exponential backoff if it is closed or restarted.
 - **State DB schema dependency:** This reads T3 Code's local state database directly. Schema updates to T3 Code could require adjustments; verify detection with `npm run once`.
 - **Read-only access:** No credentials or tokens are stored or accessed; state is read directly from SQLite with read-only locks.
-- **System Tray Icon / Settings UI:** Deferred. The bridge is designed as a headless, ultra-lightweight background process (~20MB memory). Adding Electron or a native tray framework would significantly inflate binary size and complexity; config is straightforward JSON and startup can be managed via the provided scripts.
-- **Executable Code Signing:** Deferred. This project is distributed as pure Node.js source files and scripts. Because it is not packaged into a standalone compiled binary/installer, code-signing certificates are unnecessary and are omitted.
 
 ## License
 
-This project is licensed under the MIT License. (Note: A separate LICENSE file will be included in upstream release packages).
+This project is licensed under the MIT License. The MIT `LICENSE` file is included in this repository.

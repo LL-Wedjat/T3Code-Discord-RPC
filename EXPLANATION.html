@@ -127,7 +127,7 @@
   <div class="arrow">→</div>
   <div class="node"><b>t3-state.js</b><small>Read-only query + title probe → choose focused thread → status</small></div>
   <div class="arrow">→</div>
-  <div class="node"><b>index.js</b><small>500ms poll loop, CLI, logging, shutdown</small></div>
+  <div class="node"><b>index.js</b><small>Configurable poll loop, CLI, logging, shutdown</small></div>
   <div class="arrow">→</div>
   <div class="node"><b>presence.js</b><small>Build activity, byte-truncate, wall-clock duration, 5s duration throttle</small></div>
   <div class="arrow">→</div>
@@ -144,8 +144,9 @@
   <tr><td>src/presence.js</td><td>Discord RPC client wrapper: builds activity, deduplicates by JSON key, sends structural changes immediately (subject to a 5-per-20s safety cap) and duration text to ≥5s, handles disconnect/reconnect with 5→60s backoff.</td></tr>
   <tr><td>config.example.json</td><td>Annotated-by-example config template.</td></tr>
   <tr><td>README.md</td><td>Setup, config table, CLI flags, limitations.</td></tr>
-  <tr><td>start-hidden.vbs</td><td>Windows launcher with no console window.</td></tr>
-  <tr><td>install-autostart.cmd / .ps1</td><td>Installs a shortcut into the Windows Startup folder.</td></tr>
+  <tr><td>app/</td><td>Electron GUI and system tray application files.</td></tr>
+  <tr><td>build/installer.nsh</td><td>Custom NSIS installer script for Windows setup.</td></tr>
+  <tr><td>electron-builder.yml</td><td>Electron Builder packaging configuration.</td></tr>
   <tr><td>.gitignore</td><td>Ignores <code>node_modules/</code>, local config, logs.</td></tr>
 </table>
 
@@ -177,7 +178,7 @@
   "assets": { "large_text": "T3 Code · hy4-flash-free" }
 }</code></pre>
 <p>Discord only permits a single Rich Presence activity per client. When multiple threads are running simultaneously, the bridge summarizes all active work: <code>details</code> features the focused thread headline, <code>state</code> displays compact agent and thread counts with wall-clock active working time when subagents are active (e.g. <code>5 agents · 2 threads · 12m</code>), falling back to <code>Working for &lt;duration&gt; across N threads</code> when no subagents are active, and <code>assets.large_text</code> joins running thread titles with dot separators.</p>
-<p>To respect Discord RPC rate limits, 500ms polling is used, structural changes (thread switches or status changes) are sent immediately (subject to a 5-per-20s safety cap), while ticking duration-only updates are throttled to 5 seconds. Redundant project names (such as "No project" or matching the thread title) are omitted from the status line. Text fields and buttons are truncated safely according to UTF-8 byte limits (128 bytes and 32 bytes respectively).</p>
+<p>To respect Discord RPC rate limits, polling is performed at a configurable interval (default 500ms), structural changes (thread switches or status changes) are sent immediately (subject to a 5-per-20s safety cap), while ticking duration-only updates are throttled to 5 seconds. Redundant project names (such as "No project" or matching the thread title) are omitted from the status line. Text fields and buttons are truncated safely according to UTF-8 byte limits (128 bytes and 32 bytes respectively).</p>
 <p>The <code>timestamps.start</code> field is a 10-digit Unix seconds value representing total T3 Code server uptime (from <code>server-runtime.json</code>), keeping total uptime distinct from active task durations.</p>
 
 <h2>5. Verification</h2>

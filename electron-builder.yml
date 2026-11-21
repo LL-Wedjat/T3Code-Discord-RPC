@@ -1,0 +1,24 @@
+appId: com.t3code.discordrpc
+productName: T3 Code Discord RPC
+directories:
+  output: dist-electron
+  buildResources: build
+extraMetadata:
+  main: app/main.js
+files:
+  - "app/**/*"
+  - "src/**/*"
+  - "build/**/*"
+  - "package.json"
+  - "node_modules/**/*"
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  include: build/installer.nsh

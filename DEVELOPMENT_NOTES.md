@@ -181,8 +181,6 @@ A standalone Node.js app named `t3code-discord-rpc` in the scratch folder. Depen
 | `src/presence.js` | Discord RPC client wrapper: activity building, throttling, reconnect. |
 | `README.md` | Setup guide, config reference, CLI flags, limitations. |
 | `DEVELOPMENT_NOTES.md` | This document. |
-| `start-hidden.vbs` | Windows launcher with no console window. |
-| `install-autostart.cmd` / `install-autostart.ps1` | Creates a Startup shortcut on Windows. |
 
 ### 4.2 `src/config.js`
 
@@ -240,21 +238,7 @@ A standalone Node.js app named `t3code-discord-rpc` in the scratch folder. Depen
 - Missing/placeholder client ID prints setup instructions and exits with code 1.
 - Poll loop uses chained `setTimeout` (500ms default), logs only on signature changes unless
   verbose, and handles SIGINT/SIGTERM to stop cleanly.
-- `--once` prints the detected state as JSON and exits — useful for verifying T3 detection
-  without Discord or a client ID.
-- Missing/placeholder client ID prints setup instructions and exits with code 1.
-- Poll loop uses chained `setTimeout` (never overlapping), logs only on signature changes unless
-  verbose, and handles SIGINT/SIGTERM to stop cleanly.
 - `--verbose` also turns on internal debug logging.
-
-### 4.6 Windows helpers
-
-- `start-hidden.vbs`: uses `WScript.Shell.Run "node ...", 0, False` to run hidden; assumes Node
-  is on PATH.
-- `install-autostart.cmd`: calls a small PowerShell script that creates a `.lnk` in the user's
-  Startup folder pointing to `wscript.exe` with `start-hidden.vbs` as its argument. I verified the
-  PowerShell script parses cleanly, but I did **not** run it, since that would modify the user's
-  startup settings without being asked.
 
 ## 5. Problems found and fixed during implementation
 
@@ -271,11 +255,7 @@ A standalone Node.js app named `t3code-discord-rpc` in the scratch folder. Depen
    `null`, so the next poll would resend the same activity. Fixed by setting `lastKey` from the
    pending activity when ready fires.
 
-3. **PowerShell quoting in the autostart installer.** The original one-line `powershell -Command`
-   had fragile escaping for the VBS path. Replaced it with a separate `install-autostart.ps1`
-   script that takes `-Root` as a parameter.
-
-4. **Fake-RPC test needed a pipe override.** Discord is actually running on this machine, so
+3. **Fake-RPC test needed a pipe override.** Discord is actually running on this machine, so
    pipe 0 was occupied and a dummy client ID was rejected by the real client. I added a `pipeId`
    config/CLI option so the end-to-end test could target a fake server on pipe 1. This is also
    useful for users running multiple Discord instances.
@@ -309,8 +289,7 @@ npm start                # run the bridge (Discord desktop must be open)
 
 Set `clientId` in the config to your own Discord application ID from
 <https://discord.com/developers/applications>. Optionally upload artwork assets and set
-`largeImageKey` / `smallImageKey`. On Windows, run `install-autostart.cmd` if you want it to
-launch at login.
+`largeImageKey` / `smallImageKey`.
 
 ## 8. Known limitations
 
@@ -322,7 +301,12 @@ launch at login.
 - **No auth-token use.** Reading the DB avoids credentials entirely, but it also means this only
   works for a local T3 Code install on the same machine — not a remote T3 Connect environment.
 - **Presence rate limiting.** Structural updates dispatch immediately; duration-only ticking updates are throttled to 5s, with a 4-writes-per-20s rolling safety cap.
-- **System Tray Icon / Settings UI (Deferred):** The bridge is designed as an ultra-lightweight, headless background service (~20MB memory). Adding Electron or a native GUI library would introduce heavy dependencies, bloated binaries, and platform-specific windowing issues for minimal gain over JSON configuration and startup scripts.
-- **Executable Code Signing (Deferred):** Distributed purely as standard Node.js source files without compiling to native binary packages or installers. Code-signing certificates are unnecessary for script execution.
-- **Windows helpers assume Node on PATH.** `start-hidden.vbs` and the autostart shortcut do not
-  bundle a Node runtime.
+
+## Desktop app and installer
+
+- **Electron main process:** `app/main.js` runs under Electron and executes the core modules (`readState`, `buildActivity`, `PresenceBridge`) in-process with 500ms polling.
+- **Preload API:** `preload.js` exposes a `contextBridge` API to securely bridge IPC communications between main and renderer.
+- **Three-tab GUI and Tray:** `index.html`, `styles.css`, and `renderer.js` provide a three-tab GUI (Overview with live presence, thread list and controls; Settings tab with Windows startup checkbox and state-file picker; Logs console) plus a system tray.
+- **NSIS Installer:** Configured through `electron-builder.yml` and `build/icon.ico`, `electron-builder` produces the Windows NSIS installer `dist-electron/T3 Code Discord RPC Setup 0.1.0.exe`.
+
+

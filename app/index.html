@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;" />
+  <title>T3 Code Discord RPC</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dark-theme">
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <h1 class="app-title">T3 Code Discord RPC</h1>
+      </div>
+      <div class="header-indicators">
+        <span id="statusPill" class="status-pill status-idle" aria-live="polite">Idle</span>
+        <span id="connectionBadge" class="connection-badge status-disconnected" aria-live="polite">Disconnected</span>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <!-- Left Sidebar Navigation -->
+      <aside class="app-sidebar" aria-label="Navigation">
+        <nav class="sidebar-nav">
+          <button type="button" class="nav-btn active" data-tab="overview">
+            <span class="nav-icon" aria-hidden="true">&#9673;</span>
+            <span class="nav-label">Overview</span>
+          </button>
+          <button type="button" class="nav-btn" data-tab="settings">
+            <span class="nav-icon" aria-hidden="true">&#9881;</span>
+            <span class="nav-label">Settings</span>
+          </button>
+          <button type="button" class="nav-btn" data-tab="logs">
+            <span class="nav-icon" aria-hidden="true">&#9776;</span>
+            <span class="nav-label">Logs</span>
+          </button>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="app-main">
+        <!-- Overview Section -->
+        <section id="tab-overview" class="tab-pane active" aria-labelledby="overview-heading">
+          <h2 id="overview-heading" class="sr-only">Overview</h2>
+          <div class="overview-grid">
+            <!-- Now Showing Card -->
+            <div class="card card-now-showing">
+              <h3 class="card-title">Now showing</h3>
+              <div class="card-body">
+                <div class="detail-row">
+                  <span class="detail-label">State:</span>
+                  <span id="activityState" class="detail-value">No active state</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Details:</span>
+                  <span id="activityDetails" class="detail-value">Waiting for activity...</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Elapsed:</span>
+                  <span id="elapsed" class="detail-value">00:00:00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Threads Card -->
+            <div class="card card-threads">
+              <h3 class="card-title">Live threads</h3>
+              <div class="card-body">
+                <div id="threadList" class="thread-list" role="region" aria-label="Thread List">
+                  <p class="placeholder-text">No active threads detected.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Controls Card -->
+            <div class="card card-controls">
+              <h3 class="card-title">Controls</h3>
+              <div class="card-body">
+                <div class="button-group">
+                  <button type="button" id="btnStart" class="btn btn-primary">Start Service</button>
+                  <button type="button" id="btnStop" class="btn btn-danger">Stop Service</button>
+                  <button type="button" id="btnPickState" class="btn btn-secondary">Select State File</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Config Summary -->
+            <div class="card card-config-summary">
+              <h3 class="card-title">Configuration Summary</h3>
+              <div class="card-body">
+                <div id="configSummary" class="config-summary-view">
+                  <p class="placeholder-text">Loading configuration...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="tab-settings" class="tab-pane" aria-labelledby="settings-heading" hidden>
+          <h2 id="settings-heading" class="sr-only">Settings</h2>
+          <div class="card card-settings">
+            <h3 class="card-title">Application Settings</h3>
+            <div class="card-body">
+              <form id="settingsForm" class="settings-form" novalidate>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label for="clientId">Discord Client ID</label>
+                    <input type="text" id="clientId" name="clientId" placeholder="Discord Application ID" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="pipeId">Pipe ID</label>
+                    <input type="number" id="pipeId" name="pipeId" min="0" max="9" placeholder="0" />
+                  </div>
+
+                  <div class="form-group form-col-span-2">
+                    <label for="stateFile">State File Path</label>
+                    <input type="text" id="stateFile" name="stateFile" placeholder="Path to T3 Code state JSON" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="pollIntervalMs">Poll Interval (ms)</label>
+                    <input type="number" id="pollIntervalMs" name="pollIntervalMs" min="250" placeholder="500" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="activityName">Activity Name</label>
+                    <input type="text" id="activityName" name="activityName" placeholder="T3 Code" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="largeImageKey">Large Image Key</label>
+                    <input type="text" id="largeImageKey" name="largeImageKey" placeholder="t3code-logo" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="smallImageKey">Small Image Key</label>
+                    <input type="text" id="smallImageKey" name="smallImageKey" placeholder="status-idle" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="largeImageText">Large Image Text</label>
+                    <input type="text" id="largeImageText" name="largeImageText" placeholder="T3 Code Editor" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="smallImageText">Small Image Text</label>
+                    <input type="text" id="smallImageText" name="smallImageText" placeholder="Active" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="workingMessage">Working Message</label>
+                    <input type="text" id="workingMessage" name="workingMessage" placeholder="Working on code" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="idleMessage">Idle Message</label>
+                    <input type="text" id="idleMessage" name="idleMessage" placeholder="Idle in workspace" />
+                  </div>
+
+                  <div class="form-group form-col-span-2">
+                    <label for="buttons">Buttons (JSON)</label>
+                    <textarea id="buttons" name="buttons" rows="4" placeholder='[{"label": "Project", "url": "https://..."}]'></textarea>
+                  </div>
+
+                  <div class="form-group form-col-span-2 checkboxes-group">
+                    <label class="checkbox-label" for="showProject">
+                      <input type="checkbox" id="showProject" name="showProject" />
+                      <span>Show Project Name</span>
+                    </label>
+
+                    <label class="checkbox-label" for="showModel">
+                      <input type="checkbox" id="showModel" name="showModel" />
+                      <span>Show Model</span>
+                    </label>
+
+                    <label class="checkbox-label" for="clearWhenNoThread">
+                      <input type="checkbox" id="clearWhenNoThread" name="clearWhenNoThread" />
+                      <span>Clear When No Thread</span>
+                    </label>
+
+                    <label class="checkbox-label" for="debug">
+                      <input type="checkbox" id="debug" name="debug" />
+                      <span>Debug Logging</span>
+                    </label>
+
+                    <label class="checkbox-label" for="loginAtStartup"><input type="checkbox" id="loginAtStartup" name="loginAtStartup" /><span>Start with Windows</span></label>
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" id="btnSaveSettings" class="btn btn-primary">Save Settings</button>
+                  <span id="saveStatus" class="save-status" role="status" aria-live="polite"></span>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- Logs Section -->
+        <section id="tab-logs" class="tab-pane" aria-labelledby="logs-heading" hidden>
+          <h2 id="logs-heading" class="sr-only">Logs</h2>
+          <div class="card card-logs">
+            <h3 class="card-title">Activity Logs</h3>
+            <div class="card-body">
+              <pre id="logView" class="log-view" tabindex="0" role="region" aria-label="System Logs">Ready.</pre>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-content">
+        <a id="linkRepo" href="https://github.com/LL-Wedjat/T3Code-Discord-RPC" target="_blank" rel="noopener noreferrer">
+          GitHub: LL-Wedjat/T3Code-Discord-RPC
+        </a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
