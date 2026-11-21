@@ -21,7 +21,7 @@ The project includes an Electron-based desktop application providing a full grap
   ```powershell
   npm run dist
   ```
-  Build output is generated as `dist-electron/T3 Code Discord RPC Setup 0.1.0.exe` (x64 architecture, NSIS installer with desktop shortcut and custom icon).
+  Build output is generated as `dist-electron/T3 Code Discord RPC Setup 0.1.0.exe` (x64 architecture, NSIS installer with desktop shortcut and custom icon). During installation, the NSIS installer asks whether to start T3 Code Discord RPC with Windows; this can also be toggled later in Settings or the tray menu, and the choice persists via the Windows Run entry.
 
 ### Desktop GUI features
 - **Overview tab:** Live presence status, detected threads list, and controls to start, stop, or re-poll the bridge.

@@ -3,6 +3,7 @@
 const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, dialog, shell } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
+const childProcess = require('node:child_process');
 
 const { readState } = require('../src/t3-state');
 const { PresenceBridge, buildActivity } = require('../src/presence');
@@ -71,9 +72,10 @@ function updateTrayMenu() {
     {
       type: 'checkbox',
       label: 'Start with Windows',
-      checked: app.getLoginItemSettings().openAtLogin,
+      checked: loginItemEnabled(),
       click: (item) => {
-        app.setLoginItemSettings({ openAtLogin: item.checked, args: ['--hidden'] });
+        setLoginItemEnabled(item.checked);
+        updateTrayMenu();
       },
     },
     { type: 'separator' },
@@ -212,6 +214,48 @@ async function stopBridge() {
   }
 }
 
+function loginItemEnabled() {
+  if (process.platform === 'win32') {
+    try {
+      const out = childProcess.execFileSync(
+        'reg',
+        ['query', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run', '/v', 'T3CodeDiscordRpc'],
+        { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
+      );
+      return out.includes('REG_SZ');
+    } catch {
+      return false;
+    }
+  }
+  return app.getLoginItemSettings().openAtLogin;
+}
+
+function setLoginItemEnabled(enabled) {
+  if (process.platform === 'win32') {
+    try {
+      if (enabled) {
+        const cmd = `"${process.execPath}" --hidden`;
+        childProcess.execFileSync(
+          'reg',
+          ['add', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run', '/v', 'T3CodeDiscordRpc', '/t', 'REG_SZ', '/d', cmd, '/f'],
+          { stdio: ['ignore', 'ignore', 'ignore'] }
+        );
+      } else {
+        childProcess.execFileSync(
+          'reg',
+          ['delete', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run', '/v', 'T3CodeDiscordRpc', '/f'],
+          { stdio: ['ignore', 'ignore', 'ignore'] }
+        );
+      }
+    } catch (err) {
+      addLog(`Failed to update registry login item: ${err.message}`);
+    }
+  }
+
+  app.setLoginItemSettings({ openAtLogin: Boolean(enabled), args: ['--hidden'] });
+  return loginItemEnabled();
+}
+
 function setupIpc() {
   ipcMain.handle('get-status', () => {
     return {
@@ -291,10 +335,12 @@ function setupIpc() {
     return true;
   });
 
-  ipcMain.handle('get-login-item', () => ({ openAtLogin: app.getLoginItemSettings().openAtLogin }));
+  ipcMain.handle('get-login-item', () => ({ openAtLogin: loginItemEnabled() }));
   ipcMain.handle('set-login-item', (_event, enabled) => {
-    app.setLoginItemSettings({ openAtLogin: Boolean(enabled), args: ['--hidden'] });
-    return { openAtLogin: app.getLoginItemSettings().openAtLogin };
+    const result = setLoginItemEnabled(enabled);
+    addLog(`Login item set to: ${result}`);
+    updateTrayMenu();
+    return { openAtLogin: result };
   });
 }
 

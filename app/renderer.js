@@ -411,9 +411,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginAtStartup = document.getElementById('loginAtStartup');
   if (loginAtStartup && api && typeof api.setLoginItem === 'function') {
     loginAtStartup.addEventListener('change', () => {
-      api.setLoginItem(loginAtStartup.checked).then((r) => {
-        loginAtStartup.checked = Boolean(r.openAtLogin);
-      }).catch(() => {});
+      const previous = loginAtStartup.checked;
+      api.setLoginItem(previous).then(async () => {
+        const fresh = await api.getLoginItem();
+        loginAtStartup.checked = Boolean(fresh && fresh.openAtLogin);
+        if (saveStatus) {
+          saveStatus.textContent = loginAtStartup.checked ? 'Start with Windows: enabled' : 'Start with Windows: disabled';
+          saveStatus.style.color = 'var(--ok)';
+          setTimeout(() => { if (saveStatus.textContent.startsWith('Start with Windows')) saveStatus.textContent = ''; }, 3000);
+        }
+      }).catch(() => { loginAtStartup.checked = previous; });
     });
   }
 
