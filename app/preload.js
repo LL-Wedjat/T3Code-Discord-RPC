@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('api', {
   openExternal: (...args) => ipcRenderer.invoke('open-external', ...args),
   pickStateFile: (...args) => ipcRenderer.invoke('pick-state-file', ...args),
   capture: (...args) => ipcRenderer.invoke('capture', ...args),
+  getLoginItem: (...args) => ipcRenderer.invoke('get-login-item', ...args),
+  setLoginItem: (...args) => ipcRenderer.invoke('set-login-item', ...args),
 
   onState: (callback) => {
     const listener = (_event, ...args) => callback(...args);

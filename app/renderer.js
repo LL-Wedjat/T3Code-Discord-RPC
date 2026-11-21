@@ -408,6 +408,15 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSaveSettings.addEventListener('click', handleSettingsSubmit);
   }
 
+  const loginAtStartup = document.getElementById('loginAtStartup');
+  if (loginAtStartup && api && typeof api.setLoginItem === 'function') {
+    loginAtStartup.addEventListener('change', () => {
+      api.setLoginItem(loginAtStartup.checked).then((r) => {
+        loginAtStartup.checked = Boolean(r.openAtLogin);
+      }).catch(() => {});
+    });
+  }
+
   // External repository link
   if (linkRepo && api && typeof api.openExternal === 'function') {
     linkRepo.addEventListener('click', (event) => {
@@ -424,12 +433,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const promises = [
       typeof api.getStatus === 'function' ? api.getStatus().catch(() => null) : Promise.resolve(null),
       typeof api.getConfig === 'function' ? api.getConfig().catch(() => null) : Promise.resolve(null),
-      typeof api.getLogs === 'function' ? api.getLogs().catch(() => []) : Promise.resolve([])
+      typeof api.getLogs === 'function' ? api.getLogs().catch(() => []) : Promise.resolve([]),
+      typeof api.getLoginItem === 'function' ? api.getLoginItem().catch(() => ({ openAtLogin: false })) : Promise.resolve({ openAtLogin: false })
     ];
 
-    Promise.all(promises).then(([status, config, initialLogs]) => {
+    Promise.all(promises).then(([status, config, initialLogs, loginItem]) => {
       if (config) {
         populateSettingsForm(config);
+        const loginBox = document.getElementById('loginAtStartup');
+        if (loginBox && loginItem) loginBox.checked = Boolean(loginItem.openAtLogin);
         renderConfigSummary(config);
       }
       if (status) {

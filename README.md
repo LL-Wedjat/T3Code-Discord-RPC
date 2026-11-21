@@ -17,17 +17,17 @@ The project includes an Electron-based desktop application providing a full grap
   ```powershell
   npm run electron
   ```
-- **Build Windows installer & portable exe:**
+- **Build Windows installer:**
   ```powershell
   npm run dist
   ```
-  Build artifacts are generated in `dist-electron/` (x64 architecture, NSIS installer with desktop shortcut and custom icon, as well as a standalone portable `.exe`).
+  Build output is generated as `dist-electron/T3 Code Discord RPC Setup 0.1.0.exe` (x64 architecture, NSIS installer with desktop shortcut and custom icon).
 
 ### Desktop GUI features
 - **Overview tab:** Live presence status, detected threads list, and controls to start, stop, or re-poll the bridge.
-- **Settings tab:** Full configuration editor for all options, including a file picker to locate your T3 Code state SQLite database.
+- **Settings tab:** Full configuration editor for all options, including a file picker to locate your T3 Code state SQLite database, and a "Start with Windows" checkbox (and the same checkbox in the tray menu) that registers the app to run at login via Electron's login-item settings; when launched at startup the app starts hidden in the tray.
 - **Logs tab:** Real-time log viewer for bridge operations and diagnostic messages.
-- **System Tray:** Minimizes to the Windows system tray with context menu controls for **Show/Hide**, **Start/Stop**, and **Quit**.
+- **System Tray:** Minimizes to the Windows system tray with context menu controls for **Show/Hide**, **Start/Stop**, **Start with Windows**, and **Quit**.
 
 ## CLI / headless usage
 
@@ -163,7 +163,7 @@ Run `powershell -File tray.ps1` to get a system tray icon with menu options for 
 
 ### Windows package and code signing
 
-electron-builder produces the Windows installer and portable `.exe` packages via `npm run dist`. For standalone ZIP distributions and code signing, run `powershell -File scripts\package-windows.ps1` to build `dist\t3code-discord-rpc-<version>.zip`. If `T3CODE_SIGN_THUMBPRINT` or `T3CODE_SIGN_PFX` (plus `T3CODE_SIGN_PASSWORD`) and optional `T3CODE_SIGN_TIMESTAMP` are set, the optional `scripts\sign-windows.ps1` script can sign the binaries/zip with signtool when a certificate is configured. Without a certificate it still builds an unsigned distribution.
+electron-builder produces the Windows installer (`dist-electron/T3 Code Discord RPC Setup 0.1.0.exe`) via `npm run dist`. For standalone ZIP distributions and code signing, run `powershell -File scripts\package-windows.ps1` to build `dist\t3code-discord-rpc-<version>.zip`. If `T3CODE_SIGN_THUMBPRINT` or `T3CODE_SIGN_PFX` (plus `T3CODE_SIGN_PASSWORD`) and optional `T3CODE_SIGN_TIMESTAMP` are set, the optional `scripts\sign-windows.ps1` script can sign the binaries/zip with signtool when a certificate is configured. Without a certificate it still builds an unsigned distribution.
 
 ## Testing
 

@@ -68,6 +68,14 @@ function updateTrayMenu() {
         }
       },
     },
+    {
+      type: 'checkbox',
+      label: 'Start with Windows',
+      checked: app.getLoginItemSettings().openAtLogin,
+      click: (item) => {
+        app.setLoginItemSettings({ openAtLogin: item.checked, args: ['--hidden'] });
+      },
+    },
     { type: 'separator' },
     {
       label: 'Quit',
@@ -282,6 +290,12 @@ function setupIpc() {
     fs.writeFileSync(filePath, img.toPNG());
     return true;
   });
+
+  ipcMain.handle('get-login-item', () => ({ openAtLogin: app.getLoginItemSettings().openAtLogin }));
+  ipcMain.handle('set-login-item', (_event, enabled) => {
+    app.setLoginItemSettings({ openAtLogin: Boolean(enabled), args: ['--hidden'] });
+    return { openAtLogin: app.getLoginItemSettings().openAtLogin };
+  });
 }
 
 function createWindow() {
@@ -290,6 +304,7 @@ function createWindow() {
     height: 760,
     minWidth: 860,
     minHeight: 600,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -298,8 +313,10 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
-  mainWindow.show();
-  mainWindow.focus();
+  if (!process.argv.includes('--hidden')) {
+    mainWindow.show();
+    mainWindow.focus();
+  }
 
   mainWindow.on('close', (event) => {
     if (process.platform === 'win32' && !app.isQuitting) {
@@ -325,6 +342,16 @@ function createWindow() {
     mainWindow.webContents.once('did-finish-load', () => {
       setTimeout(async () => {
         try {
+          const tabArg = process.argv.find((a) => a.startsWith('--tab='));
+          if (tabArg) {
+            const tab = tabArg.slice(6);
+            await mainWindow.webContents.executeJavaScript('document.querySelector(\'.nav-btn[data-tab=\"' + tab + '\"]\')?.click()');
+            await new Promise((r) => setTimeout(r, 300));
+          }
+          if (process.argv.includes('--scroll-bottom')) {
+            await mainWindow.webContents.executeJavaScript("const m = document.querySelector('.app-main'); if (m) m.scrollTop = m.scrollHeight;");
+            await new Promise((r) => setTimeout(r, 300));
+          }
           const img = await mainWindow.webContents.capturePage();
           const resolvedPath = path.resolve(targetPath);
           fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
