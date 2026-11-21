@@ -25,7 +25,7 @@ The project includes an Electron-based desktop application providing a full grap
 
 ### Desktop GUI features
 - **Overview tab:** Live presence status, detected threads list, and controls to start, stop, or re-poll the bridge.
-- **Settings tab:** Full configuration editor for all options, including a file picker to locate your T3 Code state SQLite database, and a "Start with Windows" checkbox (and the same checkbox in the tray menu) that registers the app to run at login via Electron's login-item settings; when launched at startup the app starts hidden in the tray.
+- **Settings tab:** Full configuration editor for all options, including a file picker to locate your T3 Code state SQLite database, and a "Start with Windows" checkbox (and the same checkbox in the tray menu) that registers the app to run at login via the Windows Run registry key; when launched at startup the app starts hidden in the tray.
 - **Logs tab:** Real-time log viewer for bridge operations and diagnostic messages.
 - **System Tray:** Minimizes to the Windows system tray with context menu controls for **Show/Hide**, **Start/Stop**, **Start with Windows**, and **Quit**.
 

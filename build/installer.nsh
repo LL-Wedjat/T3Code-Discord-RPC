@@ -13,9 +13,11 @@ Function StartupPageCreate
     Abort
   ${EndIf}
 
-  ReadRegStr $0 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "T3CodeDiscordRpc"
-  ${If} $0 != ""
-    StrCpy $StartupChecked ${BST_CHECKED}
+  ${If} $StartupChecked == ""
+    ReadRegStr $0 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "T3CodeDiscordRpc"
+    ${If} $0 != ""
+      StrCpy $StartupChecked ${BST_CHECKED}
+    ${EndIf}
   ${EndIf}
 
   ${If} $StartupChecked == ""
@@ -41,7 +43,7 @@ FunctionEnd
 !macro customInstall
   ${If} $StartupChecked == ${BST_CHECKED}
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "T3CodeDiscordRpc" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --hidden'
-  ${Else}
+  ${ElseIf} $StartupChecked == ${BST_UNCHECKED}
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "T3CodeDiscordRpc"
   ${EndIf}
 !macroend

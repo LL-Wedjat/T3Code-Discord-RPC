@@ -106,7 +106,7 @@ function updateTrayMenu() {
 }
 
 function createTrayIcon() {
-  return nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lXcAAAAASUVORK5CYII=');
+  return nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=');
 }
 
 function setupTray() {
@@ -243,7 +243,7 @@ function loginItemEnabled() {
 }
 
 function setLoginItemEnabled(enabled) {
-  if (process.platform === 'win32') {
+  if (process.platform === 'win32' && app.isPackaged) {
     try {
       if (enabled) {
         const cmd = `"${process.execPath}" --hidden`;
