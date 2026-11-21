@@ -4,6 +4,6 @@ config.json
 dist-electron/
 app-screenshot.png
 packaged-screenshot.png
-build/
+build/*
 !build/icon.ico
 
