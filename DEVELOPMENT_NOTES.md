@@ -326,3 +326,12 @@ launch at login.
 - **Executable Code Signing (Deferred):** Distributed purely as standard Node.js source files without compiling to native binary packages or installers. Code-signing certificates are unnecessary for script execution.
 - **Windows helpers assume Node on PATH.** `start-hidden.vbs` and the autostart shortcut do not
   bundle a Node runtime.
+
+## Additional release features
+
+A local browser-based settings UI is provided via `src/settings-ui.js` and can be launched using the `--settings` CLI flag. It serves a clean HTTP form interface to inspect and update bridge configuration, validating changes through `validateConfig` before saving to disk.
+
+For Windows desktop management, `tray.ps1` implements a lightweight Windows system tray launcher using `System.Windows.Forms.NotifyIcon`. It exposes an interactive context menu allowing users to start, stop, open the settings interface, view logs, and exit the bridge cleanly.
+
+Packaging and distribution are automated with `scripts/package-windows.ps1` and `scripts/sign-windows.ps1`. The packaging script bundles the project into a release archive, while the signing script provides optional Authenticode signing for scripts and executables using environment variables for certificate paths and passwords. The project is distributed under the MIT license, and the `LICENSE` file is included in the release root.
+

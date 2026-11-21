@@ -111,6 +111,7 @@ Discord uses local named pipes (`\\?\pipe\discord-ipc-0` through `9` on Windows,
 ```
 --init                 write a config template and exit
 --once                 print detected T3 Code state and exit (no Discord needed)
+--settings             open local settings web UI in browser
 --config <path>        use a specific config file
 --client-id <id>       override the Discord application ID
 --state-file <path>    override the T3 Code state SQLite path
@@ -124,6 +125,18 @@ Discord uses local named pipes (`\\?\pipe\discord-ipc-0` through `9` on Windows,
 `start-hidden.vbs` launches the bridge without a console window. To auto-start it, put a shortcut
 to that script in `shell:startup` (`Win+R` → `shell:startup`). Or run `install-autostart.cmd`
 to create the shortcut automatically.
+
+### Settings UI
+
+Run `npm run settings` (or `node src/index.js --settings`) to open a local configuration page in your browser at `http://127.0.0.1:8765` for editing config without touching JSON. The port can be changed with `T3CODE_RPC_SETTINGS_PORT`. The page saves to the same config file and validates input.
+
+### System tray (Windows)
+
+Run `powershell -File tray.ps1` to get a system tray icon with menu options for Open settings / Start bridge / Stop bridge / Exit.
+
+### Windows package and code signing
+
+Run `powershell -File scripts\package-windows.ps1` to build `dist\t3code-discord-rpc-<version>.zip`. If `T3CODE_SIGN_THUMBPRINT` or `T3CODE_SIGN_PFX` (plus `T3CODE_SIGN_PASSWORD`) and optional `T3CODE_SIGN_TIMESTAMP` are set, the zip is signed with signtool via `scripts\sign-windows.ps1`. Without a certificate it still builds an unsigned zip.
 
 ## Testing
 
@@ -152,9 +165,9 @@ The test suite covers:
 - **Discord desktop required:** Discord desktop must be running; the RPC client reconnects with exponential backoff if it is closed or restarted.
 - **State DB schema dependency:** This reads T3 Code's local state database directly. Schema updates to T3 Code could require adjustments; verify detection with `npm run once`.
 - **Read-only access:** No credentials or tokens are stored or accessed; state is read directly from SQLite with read-only locks.
-- **System Tray Icon / Settings UI:** Deferred. The bridge is designed as a headless, ultra-lightweight background process (~20MB memory). Adding Electron or a native tray framework would significantly inflate binary size and complexity; config is straightforward JSON and startup can be managed via the provided scripts.
-- **Executable Code Signing:** Deferred. This project is distributed as pure Node.js source files and scripts. Because it is not packaged into a standalone compiled binary/installer, code-signing certificates are unnecessary and are omitted.
+- **System Tray Icon / Settings UI:** Supported on Windows via a native PowerShell system tray runner and built-in local web settings server; see [Settings UI](#settings-ui) and [System tray (Windows)](#system-tray-windows).
+- **Windows Packaging & Code Signing:** Packaged distribution archives and optional Authenticode signing via signtool are supported; see [Windows package and code signing](#windows-package-and-code-signing).
 
 ## License
 
-This project is licensed under the MIT License. (Note: A separate LICENSE file will be included in upstream release packages).
+This project is licensed under the MIT License. The MIT `LICENSE` file is included in this repository.
