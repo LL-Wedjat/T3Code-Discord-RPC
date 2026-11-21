@@ -335,3 +335,12 @@ For Windows desktop management, `tray.ps1` implements a lightweight Windows syst
 
 Packaging and distribution are automated with `scripts/package-windows.ps1` and `scripts/sign-windows.ps1`. The packaging script bundles the project into a release archive, while the signing script provides optional Authenticode signing for scripts and executables using environment variables for certificate paths and passwords. The project is distributed under the MIT license, and the `LICENSE` file is included in the release root.
 
+## Desktop app and executable build
+
+- **Electron main process:** `app/main.js` runs under Electron 45 and executes the core modules (`readState`, `buildActivity`, `PresenceBridge`) in-process with 500ms polling.
+- **Preload API:** `preload.js` exposes a `contextBridge` API to securely bridge IPC communications between main and renderer.
+- **Three-tab GUI and Tray:** `index.html`, `styles.css`, and `renderer.js` provide a three-tab GUI (Overview with live presence, thread list and controls; Settings form with state-file picker; Logs console) plus a system tray.
+- **Installer & Portable Exe:** Configured through `electron-builder.yml` and `build/icon.ico`, `electron-builder` produces `dist-electron/T3 Code Discord RPC Setup 0.1.0.exe` and a portable exe.
+- **Verification flag:** The `--screenshot` flag captures the window for proof.
+
+

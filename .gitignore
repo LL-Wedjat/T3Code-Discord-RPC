@@ -1,3 +1,9 @@
 node_modules/
 config.json
 *.log
+dist-electron/
+app-screenshot.png
+packaged-screenshot.png
+build/
+!build/icon.ico
+

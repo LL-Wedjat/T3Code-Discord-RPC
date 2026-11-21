@@ -20,7 +20,10 @@
     "install-autostart.ps1",
     "LICENSE",
     "tray.ps1",
-    "scripts"
+    "scripts",
+    "app",
+    "build",
+    "electron-builder.yml"
   ],
   "scripts": {
     "start": "node src/index.js",
@@ -28,7 +31,10 @@
     "once": "node src/index.js --once",
     "settings": "node src/index.js --settings",
     "test": "node --test",
-    "check": "node --check src/index.js && node --check src/config.js && node --check src/t3-state.js && node --check src/presence.js && node --check src/settings-ui.js && npm test"
+    "check": "node --check src/index.js && node --check src/config.js && node --check src/t3-state.js && node --check src/presence.js && node --check src/settings-ui.js && npm test",
+    "electron": "electron app/main.js",
+    "dist": "electron-builder --win",
+    "pack": "electron-builder --dir"
   },
   "keywords": [
     "t3code",
@@ -40,5 +46,9 @@
   "license": "MIT",
   "dependencies": {
     "@xhayper/discord-rpc": "^1.5.1"
+  },
+  "devDependencies": {
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0"
   }
 }
